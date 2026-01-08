@@ -13,6 +13,10 @@ export default {
       },
     },
     extend: {
+      fontFamily: {
+        mono: ['JetBrains Mono', 'Fira Code', 'SF Mono', 'Monaco', 'Cascadia Code', 'monospace'],
+        sans: ['Inter', 'system-ui', 'sans-serif'],
+      },
       colors: {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
@@ -57,6 +61,19 @@ export default {
           border: "hsl(var(--sidebar-border))",
           ring: "hsl(var(--sidebar-ring))",
         },
+        status: {
+          healthy: "hsl(var(--status-healthy))",
+          "healthy-glow": "hsl(var(--status-healthy-glow))",
+          unhealthy: "hsl(var(--status-unhealthy))",
+          "unhealthy-glow": "hsl(var(--status-unhealthy-glow))",
+          warning: "hsl(var(--status-warning))",
+          unknown: "hsl(var(--status-unknown))",
+        },
+        terminal: {
+          bg: "hsl(var(--terminal-bg))",
+          text: "hsl(var(--terminal-text))",
+          border: "hsl(var(--terminal-border))",
+        },
       },
       borderRadius: {
         lg: "var(--radius)",
@@ -65,25 +82,27 @@ export default {
       },
       keyframes: {
         "accordion-down": {
-          from: {
-            height: "0",
-          },
-          to: {
-            height: "var(--radix-accordion-content-height)",
-          },
+          from: { height: "0" },
+          to: { height: "var(--radix-accordion-content-height)" },
         },
         "accordion-up": {
-          from: {
-            height: "var(--radix-accordion-content-height)",
-          },
-          to: {
-            height: "0",
-          },
+          from: { height: "var(--radix-accordion-content-height)" },
+          to: { height: "0" },
+        },
+        "fade-in": {
+          from: { opacity: "0", transform: "translateY(8px)" },
+          to: { opacity: "1", transform: "translateY(0)" },
+        },
+        "spin-slow": {
+          from: { transform: "rotate(0deg)" },
+          to: { transform: "rotate(360deg)" },
         },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
+        "fade-in": "fade-in 0.3s ease-out",
+        "spin-slow": "spin-slow 1s linear infinite",
       },
     },
   },
