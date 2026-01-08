@@ -1,73 +1,184 @@
-# Welcome to your Lovable project
+# PulseOps
 
-## Project info
+A minimal, production-style system health and deployment visibility dashboard designed to demonstrate real-world DevOps workflows.
 
-**URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
+## Architecture
 
-## How can I edit this code?
-
-There are several ways of editing your application.
-
-**Use Lovable**
-
-Simply visit the [Lovable Project](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and start prompting.
-
-Changes made via Lovable will be committed automatically to this repo.
-
-**Use your preferred IDE**
-
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
-
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
+```
+┌─────────────────────────────────────────────────────────┐
+│                     Frontend (React)                     │
+│  ┌─────────────┐  ┌─────────────┐  ┌─────────────────┐  │
+│  │ HealthCard  │  │ VersionCard │  │  AISummaryCard  │  │
+│  └──────┬──────┘  └──────┬──────┘  └────────┬────────┘  │
+│         │                │                   │           │
+│  ┌──────┴────────────────┴───────────────────┴────────┐ │
+│  │              React Query (Data Layer)               │ │
+│  └──────────────────────┬──────────────────────────────┘ │
+└─────────────────────────┼───────────────────────────────┘
+                          │
+                   HTTPS API Calls
+                          │
+┌─────────────────────────┼───────────────────────────────┐
+│           Backend (Lovable Cloud Edge Functions)         │
+│  ┌────────────┐  ┌────────────┐  ┌───────────────────┐  │
+│  │  /health   │  │  /version  │  │   /ai-summary     │  │
+│  │            │  │            │  │  (AI-powered)     │  │
+│  └────────────┘  └────────────┘  └───────────────────┘  │
+└─────────────────────────────────────────────────────────┘
 ```
 
-**Edit a file directly in GitHub**
+## API Endpoints
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+### GET /health
+Returns the current health status of the system.
 
-**Use GitHub Codespaces**
+**Response:**
+```json
+{
+  "status": "UP",
+  "timestamp": "2026-01-08T14:30:00.000Z",
+  "uptime": 86400,
+  "checks": {
+    "database": "healthy",
+    "memory": "healthy"
+  }
+}
+```
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+### GET /version
+Returns application version and build information.
 
-## What technologies are used for this project?
+**Response:**
+```json
+{
+  "version": "1.0.0",
+  "buildTimestamp": "2026-01-08T14:00:00Z",
+  "environment": "production",
+  "gitCommit": "a1b2c3d",
+  "deployedAt": "2026-01-08T14:30:00.000Z"
+}
+```
 
-This project is built with:
+### GET /ai-summary
+Returns an AI-generated system status summary.
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+**Response:**
+```json
+{
+  "summary": "All systems operational. Database and memory checks passing. Uptime stable.",
+  "generatedAt": "2026-01-08T14:30:00.000Z",
+  "model": "gemini-2.5-flash"
+}
+```
 
-## How can I deploy this project?
+## Tech Stack
 
-Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
+- **Frontend**: React 18 + TypeScript + Vite
+- **Styling**: Tailwind CSS with custom design system
+- **State Management**: TanStack React Query
+- **Backend**: Lovable Cloud Edge Functions (Deno runtime)
+- **AI Integration**: Lovable AI Gateway (Gemini 2.5 Flash)
 
-## Can I connect a custom domain to my Lovable project?
+## Project Structure
 
-Yes, you can!
+```
+├── src/
+│   ├── components/          # React components
+│   │   ├── Header.tsx       # App header with health check button
+│   │   ├── Dashboard.tsx    # Main dashboard layout
+│   │   ├── HealthCard.tsx   # Health status display
+│   │   ├── VersionCard.tsx  # Version/deployment info
+│   │   ├── AISummaryCard.tsx # AI-generated summary
+│   │   ├── MetricCard.tsx   # Reusable card component
+│   │   └── StatusBadge.tsx  # Status indicator
+│   ├── hooks/
+│   │   └── usePulseOps.ts   # Data fetching hooks
+│   ├── lib/
+│   │   └── api.ts           # API client functions
+│   └── pages/
+│       └── Index.tsx        # Main page
+├── supabase/
+│   └── functions/           # Edge functions (backend)
+│       ├── health/          # Health check endpoint
+│       ├── version/         # Version endpoint
+│       └── ai-summary/      # AI summary endpoint
+└── README.md
+```
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+## CI/CD Deployment
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+### Recommended Pipeline
+
+1. **Build Stage**
+   ```yaml
+   - npm ci
+   - npm run build
+   - npm run lint
+   ```
+
+2. **Test Stage**
+   ```yaml
+   - npm run test (if tests exist)
+   - Health check endpoint verification
+   ```
+
+3. **Deploy Stage**
+   - Frontend: Deploy built assets to CDN/static hosting
+   - Backend: Edge functions deploy automatically with Lovable Cloud
+
+### Environment Variables
+
+The application uses these environment variables (automatically configured by Lovable Cloud):
+
+| Variable | Description |
+|----------|-------------|
+| `VITE_SUPABASE_URL` | Backend API URL |
+| `VITE_SUPABASE_PUBLISHABLE_KEY` | Public API key |
+| `LOVABLE_API_KEY` | AI Gateway access (server-side only) |
+
+### Docker Support
+
+The frontend can be containerized with a simple Dockerfile:
+
+```dockerfile
+FROM node:20-alpine AS builder
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci
+COPY . .
+RUN npm run build
+
+FROM nginx:alpine
+COPY --from=builder /app/dist /usr/share/nginx/html
+EXPOSE 80
+CMD ["nginx", "-g", "daemon off;"]
+```
+
+## Features
+
+- ✅ Real-time health status monitoring
+- ✅ Application version and deployment tracking
+- ✅ AI-powered system summaries
+- ✅ Manual health check trigger
+- ✅ Auto-refresh (30-second intervals)
+- ✅ Loading and error states
+- ✅ Dark terminal-inspired design
+- ✅ Stateless backend architecture
+- ✅ No hardcoded secrets
+
+## Development
+
+```bash
+# Install dependencies
+npm install
+
+# Start development server
+npm run dev
+
+# Build for production
+npm run build
+```
+
+## License
+
+MIT
