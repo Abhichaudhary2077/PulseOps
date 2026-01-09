@@ -9,3 +9,5 @@ services:
       - "3000:3000"
     environment:
       NODE_ENV: production
+      # If you have a DB URL, pass it here from GitHub Secrets:
+      # MONGO_URI: ${{ secrets.MONGO_URI }}
