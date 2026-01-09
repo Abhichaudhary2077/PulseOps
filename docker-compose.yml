@@ -1,13 +1,10 @@
 version: "3.9"
-
 services:
   backend:
     image: abhichoudhary2077/pulseops-backend:latest
     container_name: pulseops-backend
     restart: always
     ports:
-      - "3000:3000"
+      - "3000:3000"  # This maps the EC2 port 3000 to the Docker port 3000
     environment:
       NODE_ENV: production
-      # If you have a DB URL, pass it here from GitHub Secrets:
-      # MONGO_URI: ${{ secrets.MONGO_URI }}

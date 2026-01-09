@@ -34,6 +34,8 @@ app.get("/ai-summary", (req, res) => {
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
+
+// CHANGE THIS LINE: Add '0.0.0.0' to allow the ALB to connect
+app.listen(PORT, '0.0.0.0', () => {
   console.log(`PulseOps backend running on port ${PORT}`);
 });
