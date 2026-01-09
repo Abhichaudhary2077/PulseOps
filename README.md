@@ -188,7 +188,7 @@ Key characteristics:
 - Stateless service
 - Environment-based configuration
 - Containerized runtime
-- Manual rollback via container redeploy
+- Manual rollback via container redeploy.
 
 ## DevOps Focus
 
