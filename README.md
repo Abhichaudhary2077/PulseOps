@@ -179,6 +179,27 @@ npm run dev
 npm run build
 ```
 
-## License
+## Production Deployment
 
-MIT
+The backend service is containerized using Docker and deployed on an AWS EC2 instance.
+The service exposes health and version endpoints to simulate real production monitoring.
+
+Key characteristics:
+- Stateless service
+- Environment-based configuration
+- Containerized runtime
+- Manual rollback via container redeploy
+
+## DevOps Focus
+
+This project was intentionally designed with minimal application logic to emphasize
+DevOps fundamentals:
+
+- Service health monitoring via HTTP endpoints
+- Environment-based configuration
+- Containerized backend runtime
+- Cloud deployment on AWS EC2
+- Clear separation between frontend and backend services
+
+The goal was to simulate real-world operational workflows rather than build
+feature-heavy application logic.

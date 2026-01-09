@@ -1,0 +1,11 @@
+version: "3.9"
+
+services:
+  backend:
+    image: abhichoudhary2077/pulseops-backend:latest
+    container_name: pulseops-backend
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: production
