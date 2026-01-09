@@ -1,205 +1,207 @@
 # PulseOps
 
-A minimal, production-style system health and deployment visibility dashboard designed to demonstrate real-world DevOps workflows.
+PulseOps is a minimal, production-style system health and deployment visibility dashboard built to demonstrate real-world DevOps workflows using Docker, CI/CD, and AWS.
 
-## Architecture
+The project intentionally focuses on operational correctness, automation, and deployment reliability rather than feature-heavy application logic.
 
-```
+---
+
+## Architecture Overview
+
 ┌─────────────────────────────────────────────────────────┐
-│                     Frontend (React)                     │
-│  ┌─────────────┐  ┌─────────────┐  ┌─────────────────┐  │
-│  │ HealthCard  │  │ VersionCard │  │  AISummaryCard  │  │
-│  └──────┬──────┘  └──────┬──────┘  └────────┬────────┘  │
-│         │                │                   │           │
-│  ┌──────┴────────────────┴───────────────────┴────────┐ │
-│  │              React Query (Data Layer)               │ │
-│  └──────────────────────┬──────────────────────────────┘ │
-└─────────────────────────┼───────────────────────────────┘
-                          │
-                   HTTPS API Calls
-                          │
-┌─────────────────────────┼───────────────────────────────┐
-│           Backend (Lovable Cloud Edge Functions)         │
-│  ┌────────────┐  ┌────────────┐  ┌───────────────────┐  │
-│  │  /health   │  │  /version  │  │   /ai-summary     │  │
-│  │            │  │            │  │  (AI-powered)     │  │
-│  └────────────┘  └────────────┘  └───────────────────┘  │
-└─────────────────────────────────────────────────────────┘
-```
+│ Frontend (React) │
+│ ┌─────────────┐ ┌─────────────┐ ┌─────────────────┐ │
+│ │ HealthCard │ │ VersionCard │ │ AISummaryCard │ │
+│ └──────┬──────┘ └──────┬──────┘ └────────┬────────┘ │
+│ │ │ │ │
+│ ┌──────┴────────────────┴───────────────────┴────────┐│
+│ │ React Query (Data Fetch Layer) ││
+│ └──────────────────────┬─────────────────────────────┘│
+└─────────────────────────┼──────────────────────────────┘
+│ HTTP REST API
+│
+┌─────────────────────────┼──────────────────────────────┐
+│ Backend (Node.js + Express) │
+│ ┌────────────┐ ┌────────────┐ ┌──────────────────┐ │
+│ │ /health │ │ /version │ │ /ai-summary │ │
+│ │ │ │ │ │ (mock AI output) │ │
+│ └────────────┘ └────────────┘ └──────────────────┘ │
+│ │
+│ Docker Container (Stateless Service) │
+└─────────────────────────┼──────────────────────────────┘
+│
+AWS EC2 (Docker Host)
+
+yaml
+Copy code
+
+---
 
 ## API Endpoints
 
 ### GET /health
+
 Returns the current health status of the system.
 
-**Response:**
 ```json
 {
   "status": "UP",
-  "timestamp": "2026-01-08T14:30:00.000Z",
-  "uptime": 86400,
+  "uptime": 930,
+  "timestamp": "2026-01-09T10:49:52.681Z",
   "checks": {
     "database": "healthy",
     "memory": "healthy"
   }
 }
-```
+GET /version
+Returns application version and deployment metadata.
 
-### GET /version
-Returns application version and build information.
-
-**Response:**
-```json
+json
+Copy code
 {
   "version": "1.0.0",
-  "buildTimestamp": "2026-01-08T14:00:00Z",
   "environment": "production",
-  "gitCommit": "a1b2c3d",
-  "deployedAt": "2026-01-08T14:30:00.000Z"
+  "deployedAt": "2026-01-09T10:45:00.000Z"
 }
-```
+GET /ai-summary
+Returns a simulated AI-generated system summary.
 
-### GET /ai-summary
-Returns an AI-generated system status summary.
-
-**Response:**
-```json
+json
+Copy code
 {
-  "summary": "All systems operational. Database and memory checks passing. Uptime stable.",
-  "generatedAt": "2026-01-08T14:30:00.000Z",
-  "model": "gemini-2.5-flash"
+  "summary": "System healthy. All checks passing. No action required.",
+  "generatedAt": "2026-01-09T10:50:00.000Z"
 }
-```
+Tech Stack
+Frontend
+React 18
 
-## Tech Stack
+TypeScript
 
-- **Frontend**: React 18 + TypeScript + Vite
-- **Styling**: Tailwind CSS with custom design system
-- **State Management**: TanStack React Query
-- **Backend**: Lovable Cloud Edge Functions (Deno runtime)
-- **AI Integration**: Lovable AI Gateway (Gemini 2.5 Flash)
+Vite
 
-## Project Structure
+Tailwind CSS
 
-```
+TanStack React Query
+
+Backend
+Node.js
+
+Express
+
+REST API
+
+Stateless architecture
+
+Infrastructure & DevOps
+Docker
+
+Docker Compose
+
+AWS EC2
+
+Nginx (host-based reverse proxy)
+
+GitHub Actions (CI/CD)
+
+Docker Hub (Image Registry)
+
+Project Structure
+bash
+Copy code
+PulseOps/
+├── backend/
+│   ├── Dockerfile
+│   ├── index.js
+│   ├── package.json
+│
 ├── src/
-│   ├── components/          # React components
-│   │   ├── Header.tsx       # App header with health check button
-│   │   ├── Dashboard.tsx    # Main dashboard layout
-│   │   ├── HealthCard.tsx   # Health status display
-│   │   ├── VersionCard.tsx  # Version/deployment info
-│   │   ├── AISummaryCard.tsx # AI-generated summary
-│   │   ├── MetricCard.tsx   # Reusable card component
-│   │   └── StatusBadge.tsx  # Status indicator
+│   ├── components/
 │   ├── hooks/
-│   │   └── usePulseOps.ts   # Data fetching hooks
 │   ├── lib/
-│   │   └── api.ts           # API client functions
 │   └── pages/
-│       └── Index.tsx        # Main page
-├── supabase/
-│   └── functions/           # Edge functions (backend)
-│       ├── health/          # Health check endpoint
-│       ├── version/         # Version endpoint
-│       └── ai-summary/      # AI summary endpoint
+│
+├── frontend/
+│   └── dist/                # Built frontend assets
+│
+├── .github/workflows/
+│   └── deploy.yml           # CI/CD pipeline
+│
+├── docker-compose.yml
 └── README.md
-```
+CI/CD Pipeline
+On every push to the main branch, the following steps are executed automatically using GitHub Actions:
 
-## CI/CD Deployment
+Backend Docker image is built
 
-### Recommended Pipeline
+Image is pushed to Docker Hub
 
-1. **Build Stage**
-   ```yaml
-   - npm ci
-   - npm run build
-   - npm run lint
-   ```
+docker-compose.yml is copied to EC2 (stateless deployment)
 
-2. **Test Stage**
-   ```yaml
-   - npm run test (if tests exist)
-   - Health check endpoint verification
-   ```
+EC2 pulls the latest Docker image
 
-3. **Deploy Stage**
-   - Frontend: Deploy built assets to CDN/static hosting
-   - Backend: Edge functions deploy automatically with Lovable Cloud
+Containers are restarted using Docker Compose
 
-### Environment Variables
+Old Docker images are pruned to conserve disk space
 
-The application uses these environment variables (automatically configured by Lovable Cloud):
+Deployment Characteristics
+Stateless EC2 instance
 
-| Variable | Description |
-|----------|-------------|
-| `VITE_SUPABASE_URL` | Backend API URL |
-| `VITE_SUPABASE_PUBLISHABLE_KEY` | Public API key |
-| `LOVABLE_API_KEY` | AI Gateway access (server-side only) |
+No source code stored on server
 
-### Docker Support
+Immutable Docker images
 
-The frontend can be containerized with a simple Dockerfile:
+Fully automated deployment
 
-```dockerfile
-FROM node:20-alpine AS builder
-WORKDIR /app
-COPY package*.json ./
-RUN npm ci
-COPY . .
-RUN npm run build
+Manual rollback via image redeploy
 
-FROM nginx:alpine
-COPY --from=builder /app/dist /usr/share/nginx/html
-EXPOSE 80
-CMD ["nginx", "-g", "daemon off;"]
-```
+Docker Compose
+yaml
+Copy code
+version: "3.9"
 
-## Features
+services:
+  backend:
+    image: abhichoudhary2077/pulseops-backend:latest
+    container_name: pulseops-backend
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: production
+Environment Configuration
+Frontend API resolution is environment-aware:
 
-- ✅ Real-time health status monitoring
-- ✅ Application version and deployment tracking
-- ✅ AI-powered system summaries
-- ✅ Manual health check trigger
-- ✅ Auto-refresh (30-second intervals)
-- ✅ Loading and error states
-- ✅ Dark terminal-inspired design
-- ✅ Stateless backend architecture
-- ✅ No hardcoded secrets
+Local development uses http://localhost:3000
 
-## Development
+Production uses http://<EC2_PUBLIC_IP>:3000
 
-```bash
-# Install dependencies
-npm install
+No secrets are hardcoded in the frontend.
 
-# Start development server
-npm run dev
+Production Deployment
+Backend runs inside Docker on AWS EC2
 
-# Build for production
-npm run build
-```
+Frontend is served via Nginx
 
-## Production Deployment
+API is accessed via public EC2 IP
 
-The backend service is containerized using Docker and deployed on an AWS EC2 instance.
-The service exposes health and version endpoints to simulate real production monitoring.
+CI/CD handles all deployments automatically
 
-Key characteristics:
-- Stateless service
-- Environment-based configuration
-- Containerized runtime
-- Manual rollback via container redeploy.
+Rollback is performed by redeploying a previous Docker image.
 
-## DevOps Focus
+DevOps Focus
+This project was designed to emphasize core DevOps principles:
 
-This project was intentionally designed with minimal application logic to emphasize
-DevOps fundamentals:
+Service health monitoring via HTTP endpoints
 
-- Service health monitoring via HTTP endpoints
-- Environment-based configuration
-- Containerized backend runtime
-- Cloud deployment on AWS EC2
-- Clear separation between frontend and backend services
+Stateless backend architecture
 
-The goal was to simulate real-world operational workflows rather than build
-feature-heavy application logic.
+Containerized application runtime
+
+Cloud deployment on AWS
+
+CI/CD automation using GitHub Actions
+
+Clear separation between application and infrastructure
+
+The objective is to demonstrate real-world operational workflows rather than application complexity.
