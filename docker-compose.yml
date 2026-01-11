@@ -18,6 +18,6 @@ services:
     container_name: pulseops-frontend
     restart: always
     ports:
-      - "80:80"  # This maps EC2 Port 80 to Docker Port 80
+      - "80:80"
     depends_on:
       - backend
