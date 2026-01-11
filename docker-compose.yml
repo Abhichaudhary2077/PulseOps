@@ -1,22 +1,17 @@
 version: "3.9"
 
 services:
-  # 1. Backend Service (Node.js)
   backend:
-    image: abhichoudhary2077/pulseops-backend:latest
+    image: abhicdhaudary2077/pulseops-backend:latest
     container_name: pulseops-backend
-    restart: always
+    restart: unless-stopped
     ports:
       - "3000:3000"
-    environment:
-      NODE_ENV: production
-      PORT: 3000
 
-  # 2. Frontend Service (Nginx + React/Vite)
   frontend:
-    image: abhichoudhary2077/pulseops-frontend:latest
+    build: ./frontend
     container_name: pulseops-frontend
-    restart: always
+    restart: unless-stopped
     ports:
       - "80:80"
     depends_on:
