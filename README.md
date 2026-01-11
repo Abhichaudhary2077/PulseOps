@@ -1,47 +1,54 @@
 # PulseOps
 
-PulseOps is a minimal, production-style system health and deployment visibility dashboard built to demonstrate real-world DevOps workflows using Docker, CI/CD, and AWS.
+PulseOps is a minimal, production-style system health and deployment visibility dashboard built to demonstrate real-world **DevOps workflows** using Docker, CI/CD, and AWS.
 
-The project intentionally focuses on operational correctness, automation, and deployment reliability rather than feature-heavy application logic.
+The project intentionally prioritizes **operational correctness, automation, and stateless deployment** over feature-heavy application logic.
+
+---
+
+## What This Project Demonstrates
+
+- Containerized frontend and backend services
+- Stateless deployment on AWS EC2
+- Automated CI/CD using GitHub Actions
+- Image-based deployments via Docker Hub
+- Zero manual server changes during deployments
+- Real-world debugging of production failures (auth, networking, CI issues)
+
+This project is designed as a **DevOps-focused portfolio artifact**.
 
 ---
 
 ## Architecture Overview
 
-┌─────────────────────────────────────────────────────────┐
-│ Frontend (React) │
-│ ┌─────────────┐ ┌─────────────┐ ┌─────────────────┐ │
-│ │ HealthCard │ │ VersionCard │ │ AISummaryCard │ │
-│ └──────┬──────┘ └──────┬──────┘ └────────┬────────┘ │
-│ │ │ │ │
-│ ┌──────┴────────────────┴───────────────────┴────────┐│
-│ │ React Query (Data Fetch Layer) ││
-│ └──────────────────────┬─────────────────────────────┘│
-└─────────────────────────┼──────────────────────────────┘
-│ HTTP REST API
-│
-┌─────────────────────────┼──────────────────────────────┐
-│ Backend (Node.js + Express) │
-│ ┌────────────┐ ┌────────────┐ ┌──────────────────┐ │
-│ │ /health │ │ /version │ │ /ai-summary │ │
-│ │ │ │ │ │ (mock AI output) │ │
-│ └────────────┘ └────────────┘ └──────────────────┘ │
-│ │
-│ Docker Container (Stateless Service) │
-└─────────────────────────┼──────────────────────────────┘
-│
+Browser
+|
+| HTTP
+v
+Application Load Balancer (ALB)
+|
+v
 AWS EC2 (Docker Host)
+|
+|-- Nginx Container (Frontend - React)
+|
+|-- Node.js Container (Backend API)
 
-yaml
+pgsql
 Copy code
+
+- Both services are **stateless**
+- EC2 stores **only docker-compose.yml**
+- No source code exists on the server
+- Deployments are fully image-driven
 
 ---
 
-## API Endpoints
+## Backend API
 
-### GET /health
+### `GET /health`
 
-Returns the current health status of the system.
+Returns current system health.
 
 ```json
 {
@@ -54,7 +61,7 @@ Returns the current health status of the system.
   }
 }
 GET /version
-Returns application version and deployment metadata.
+Returns deployment metadata.
 
 json
 Copy code
@@ -64,7 +71,7 @@ Copy code
   "deployedAt": "2026-01-09T10:45:00.000Z"
 }
 GET /ai-summary
-Returns a simulated AI-generated system summary.
+Simulated AI-generated system summary.
 
 json
 Copy code
@@ -84,6 +91,8 @@ Tailwind CSS
 
 TanStack React Query
 
+Nginx (containerized)
+
 Backend
 Node.js
 
@@ -91,117 +100,117 @@ Express
 
 REST API
 
-Stateless architecture
+Stateless service design
 
-Infrastructure & DevOps
+DevOps & Infrastructure
 Docker
 
 Docker Compose
 
 AWS EC2
 
-Nginx (host-based reverse proxy)
+AWS Application Load Balancer
 
 GitHub Actions (CI/CD)
 
-Docker Hub (Image Registry)
+Docker Hub (image registry)
 
 Project Structure
-bash
+swift
 Copy code
 PulseOps/
 ├── backend/
 │   ├── Dockerfile
 │   ├── index.js
-│   ├── package.json
-│
-├── src/
-│   ├── components/
-│   ├── hooks/
-│   ├── lib/
-│   └── pages/
+│   └── package.json
 │
 ├── frontend/
-│   └── dist/                # Built frontend assets
+│   ├── Dockerfile
+│   └── src/
 │
 ├── .github/workflows/
-│   └── deploy.yml           # CI/CD pipeline
+│   └── deploy.yml
 │
 ├── docker-compose.yml
 └── README.md
-CI/CD Pipeline
-On every push to the main branch, the following steps are executed automatically using GitHub Actions:
-
-Backend Docker image is built
-
-Image is pushed to Docker Hub
-
-docker-compose.yml is copied to EC2 (stateless deployment)
-
-EC2 pulls the latest Docker image
-
-Containers are restarted using Docker Compose
-
-Old Docker images are pruned to conserve disk space
-
-Deployment Characteristics
-Stateless EC2 instance
-
-No source code stored on server
-
-Immutable Docker images
-
-Fully automated deployment
-
-Manual rollback via image redeploy
-
-Docker Compose
+Docker Compose (Production)
 yaml
 Copy code
-version: "3.9"
-
 services:
   backend:
     image: abhichoudhary2077/pulseops-backend:latest
     container_name: pulseops-backend
-    restart: always
+    restart: unless-stopped
     ports:
       - "3000:3000"
-    environment:
-      NODE_ENV: production
-Environment Configuration
-Frontend API resolution is environment-aware:
 
-Local development uses http://localhost:3000
+  frontend:
+    image: abhichoudhary2077/pulseops-frontend:latest
+    container_name: pulseops-frontend
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+CI/CD Pipeline
+On every push to the main branch:
 
-Production uses http://<EC2_PUBLIC_IP>:3000
+Backend Docker image is built
 
-No secrets are hardcoded in the frontend.
+Frontend Docker image is built
 
-Production Deployment
-Backend runs inside Docker on AWS EC2
+Images are pushed to Docker Hub
 
-Frontend is served via Nginx
+GitHub Actions connects to EC2 via SSH
 
-API is accessed via public EC2 IP
+EC2 pulls latest images
 
-CI/CD handles all deployments automatically
+Containers are restarted using Docker Compose
 
-Rollback is performed by redeploying a previous Docker image.
+No manual SSH or server configuration is required after initial setup.
+
+Deployment Characteristics
+Stateless EC2 instance
+
+Immutable Docker images
+
+No source code stored on server
+
+Fully automated deployments
+
+Manual rollback via image re-deploy
+
+Designed to fail loudly and visibly
 
 DevOps Focus
-This project was designed to emphasize core DevOps principles::
+This project emphasizes:
 
-Service health monitoring via HTTP endpoints
+CI/CD reliability
 
-Stateless backend architecture
+Container lifecycle management
 
-Containerized application runtime
+Infrastructure debugging
 
-Cloud deployment on AWS
+Deployment automation
 
-CI/CD automation using GitHub Actions
+Real-world failure handling
 
-Clear separation between application and infrastructure
+Application logic is intentionally minimal to keep focus on operations.
 
-The objective is to demonstrate real-world operational workflows rather than application complexity.
+Intended Use
+This project is built as a DevOps portfolio project to demonstrate practical understanding of:
+
+Dockerized deployments
+
+CI/CD pipelines
+
+Cloud infrastructure basics
+
+Production debugging and recovery
+
+Notes
+Monitoring and autoscaling are intentionally excluded to keep scope focused
+
+Architecture is single-EC2 by design for learning clarity
+
+Project favors simplicity and correctness over scale
