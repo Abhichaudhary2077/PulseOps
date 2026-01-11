@@ -1,13 +1,8 @@
 // src/lib/api.ts
 
-// Base URL for backend API
-// In production: http://<EC2_PUBLIC_IP>:3000
-// In local dev: http://localhost:3000
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
-
-if (!API_BASE_URL) {
-  throw new Error("VITE_API_BASE_URL is not defined");
-}
+// Instead of crashing if the variable is missing, we use "/api" as a backup.
+// Your AWS Load Balancer is already set up to catch anything starting with "/api"!
+const API_BASE_URL = "/api"; 
 
 async function handleResponse(res: Response) {
   if (!res.ok) {
