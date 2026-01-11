@@ -19,12 +19,18 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Build and push backend image
+      # Build and Push BOTH images
+      - name: Build and push Docker images
         run: |
+          # Backend build
           docker build -t abhichoudhary2077/pulseops-backend:latest ./backend
           docker push abhichoudhary2077/pulseops-backend:latest
+          
+          # Frontend build
+          docker build -t abhichoudhary2077/pulseops-frontend:latest ./frontend
+          docker push abhichoudhary2077/pulseops-frontend:latest
 
-      # 4️⃣ Copy docker-compose.yml to EC2 (Makes it stateless)
+      # Copy docker-compose.yml to EC2
       - name: Copy docker-compose to EC2
         uses: appleboy/scp-action@v0.1.7
         with:
@@ -34,7 +40,7 @@ jobs:
           source: "docker-compose.yml"
           target: "/home/ec2-user/"
 
-      # 5️⃣ Deploy via SSH
+      # Deploy via SSH
       - name: Deploy on EC2
         uses: appleboy/ssh-action@v1.0.3
         with:
@@ -43,7 +49,14 @@ jobs:
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
             cd /home/ec2-user
+            # Login to Docker Hub on EC2 (Required if repo is private)
+            echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
+            
+            # Pull the latest versions of both images
             docker compose pull
+            
+            # Re-start containers with the new images
             docker compose up -d
-            # Optional: Clean up old images to keep disk space free
+            
+            # Clean up old/unused images to save EC2 disk space
             docker image prune -f
