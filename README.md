@@ -190,7 +190,7 @@ CI/CD handles all deployments automatically
 Rollback is performed by redeploying a previous Docker image.
 
 DevOps Focus
-This project was designed to emphasize core DevOps principles:
+This project was designed to emphasize core DevOps principles::
 
 Service health monitoring via HTTP endpoints
 
