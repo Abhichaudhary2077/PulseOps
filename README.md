@@ -1,5 +1,7 @@
 # PulseOps
 
+> Deployed with Docker, GitHub Actions, and OCI for automated image-based delivery.
+
 PulseOps is a minimal, production-style system health and deployment visibility dashboard built to demonstrate real-world **DevOps workflows** using Docker, CI/CD, and AWS.
 
 The project intentionally prioritizes **operational correctness, automation, and stateless deployment** over feature-heavy application logic.
