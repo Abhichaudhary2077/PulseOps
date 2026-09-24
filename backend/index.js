@@ -1,10 +1,40 @@
 import express from "express";
 import cors from "cors";
+import rateLimit from "express-rate-limit";
 
 const app = express();
+
 app.use(cors());
 
 const START_TIME = Date.now();
+
+// Use the real client IP supplied by Nginx.
+// Fall back to Express' detected IP when running without the proxy.
+const getClientIp = (req) => {
+  return req.get("X-Real-IP") || req.ip;
+};
+
+// Global API rate limit:
+// 60 requests per minute per client.
+const apiLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  limit: 60,
+  standardHeaders: true,
+  legacyHeaders: false,
+
+  keyGenerator: getClientIp,
+
+  handler: (req, res) => {
+    res.status(429).json({
+      status: "RATE_LIMITED",
+      message: "Too many API requests. Please try again later.",
+      retryAfterSeconds: 60
+    });
+  }
+});
+
+// Apply rate limiting to all API endpoints.
+app.use(apiLimiter);
 
 app.get("/health", (req, res) => {
   res.json({
@@ -35,7 +65,6 @@ app.get("/ai-summary", (req, res) => {
 
 const PORT = process.env.PORT || 3000;
 
-// CHANGE THIS LINE: Add '0.0.0.0' to allow the ALB to connect
-app.listen(PORT, '0.0.0.0', () => {
+app.listen(PORT, "0.0.0.0", () => {
   console.log(`PulseOps backend running on port ${PORT}`);
 });
