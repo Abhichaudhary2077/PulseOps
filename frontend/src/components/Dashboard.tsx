@@ -1,6 +1,7 @@
 import { HealthCard } from "./HealthCard";
 import { VersionCard } from "./VersionCard";
 import { AISummaryCard } from "./AISummaryCard";
+import { SystemMetricsCard } from "./SystemMetricsCard";
 
 export function Dashboard() {
   return (
@@ -18,12 +19,14 @@ export function Dashboard() {
         <HealthCard />
         <VersionCard />
         <AISummaryCard />
+        <SystemMetricsCard />
       </div>
 
       <footer className="mt-12 border-t border-border pt-6">
         <div className="flex flex-col items-center justify-between gap-4 text-xs text-muted-foreground sm:flex-row">
           <p className="font-mono">
-            Auto-refresh: <span className="text-primary">30s</span> | Last updated: {new Date().toLocaleTimeString()}
+            Auto-refresh: <span className="text-primary">30s</span> | Last updated:{" "}
+            {new Date().toLocaleTimeString()}
           </p>
           <p className="font-mono">
             Built for DevOps visibility

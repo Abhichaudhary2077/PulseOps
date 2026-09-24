@@ -3,6 +3,7 @@ import {
   fetchHealth,
   fetchVersion,
   fetchAISummary,
+  fetchSystemMetrics,
 } from "@/lib/api";
 
 /**
@@ -31,6 +32,15 @@ export function useAISummary() {
     queryKey: ["ai-summary"],
     queryFn: fetchAISummary,
     staleTime: 60_000,
+  });
+}
+
+export function useSystemMetrics() {
+  return useQuery({
+    queryKey: ["system"],
+    queryFn: fetchSystemMetrics,
+    refetchInterval: 30_000,
+    staleTime: 10_000,
   });
 }
 

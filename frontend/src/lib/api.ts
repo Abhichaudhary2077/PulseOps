@@ -26,3 +26,8 @@ export async function fetchAISummary() {
   const res = await fetch(`${API_BASE_URL}/ai-summary`);
   return handleResponse(res);
 }
+
+export async function fetchSystemMetrics() {
+  const res = await fetch(`${API_BASE_URL}/system`);
+  return handleResponse(res);
+}
