@@ -3,8 +3,6 @@ services:
     image: abhichoudhary2077/pulseops-backend:latest
     container_name: pulseops-backend
     restart: unless-stopped
-    ports:
-      - "3000:3000"
 
   frontend:
     image: abhichoudhary2077/pulseops-frontend:latest
