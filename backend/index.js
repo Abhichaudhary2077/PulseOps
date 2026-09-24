@@ -1,6 +1,6 @@
 import express from "express";
 import cors from "cors";
-import rateLimit from "express-rate-limit";
+import { rateLimit, ipKeyGenerator } from "express-rate-limit";
 
 const app = express();
 
@@ -8,18 +8,19 @@ app.use(cors());
 
 const START_TIME = Date.now();
 
-// Use the real client IP supplied by Nginx.
-// Fall back to Express' detected IP when running without the proxy.
+// Nginx sets X-Real-IP to the actual client address.
+// The fallback handles requests made directly to the backend.
 const getClientIp = (req) => {
-  return req.get("X-Real-IP") || req.ip;
+  const clientIp = req.get("X-Real-IP") || req.ip;
+  return ipKeyGenerator(clientIp);
 };
 
-// Global API rate limit:
-// 60 requests per minute per client.
+// 60 API requests per minute per client.
 const apiLimiter = rateLimit({
   windowMs: 60 * 1000,
   limit: 60,
-  standardHeaders: true,
+
+  standardHeaders: "draft-8",
   legacyHeaders: false,
 
   keyGenerator: getClientIp,
@@ -33,7 +34,7 @@ const apiLimiter = rateLimit({
   }
 });
 
-// Apply rate limiting to all API endpoints.
+// Protect all backend API endpoints.
 app.use(apiLimiter);
 
 app.get("/health", (req, res) => {

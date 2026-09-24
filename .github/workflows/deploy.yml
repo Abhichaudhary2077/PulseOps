@@ -50,9 +50,26 @@ jobs:
           host: ${{ secrets.OCI_HOST }}
           username: ${{ secrets.OCI_USER }}
           key: ${{ secrets.OCI_SSH_KEY }}
+          command_timeout: 5m
           script: |
             set -e
+
             cd ~/pulseops
-            docker compose pull
-            docker compose up -d --remove-orphans
-            docker image prune -f
+
+            echo "=== MEMORY BEFORE DEPLOY ==="
+            free -h
+
+            echo "=== PULL IMAGES ==="
+            timeout 120s docker compose pull
+
+            echo "=== START SERVICES ==="
+            timeout 60s docker compose up -d --remove-orphans
+
+            echo "=== CLEAN UNUSED IMAGES ==="
+            timeout 30s docker image prune -f
+
+            echo "=== SERVICES ==="
+            docker compose ps
+
+            echo "=== MEMORY AFTER DEPLOY ==="
+            free -h
