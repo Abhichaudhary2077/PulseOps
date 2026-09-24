@@ -215,4 +215,4 @@ Monitoring and autoscaling are intentionally excluded to keep scope focused
 
 Architecture is single-EC2 by design for learning clarity
 
-Project favors simplicity and correctness over scale
+Project favors simplicity and correctness over scaleOCI CI/CD deployment test
