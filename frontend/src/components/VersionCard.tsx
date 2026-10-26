@@ -3,16 +3,14 @@ import { MetricCard } from "./MetricCard";
 import { useVersion } from "@/hooks/usePulseOps";
 import { format } from "date-fns";
 
+function formatTimestamp(timestamp: string): string {
+  const date = new Date(timestamp);
+  if (!Number.isFinite(date.getTime())) return "unknown";
+  return format(date, "MMM d, yyyy HH:mm");
+}
+
 export function VersionCard() {
   const { data, isLoading, error } = useVersion();
-
-  const formatTimestamp = (timestamp: string) => {
-    try {
-      return format(new Date(timestamp), "MMM d, yyyy HH:mm");
-    } catch {
-      return timestamp;
-    }
-  };
 
   return (
     <MetricCard
@@ -38,8 +36,11 @@ export function VersionCard() {
               <GitBranch className="h-4 w-4 text-muted-foreground" />
               <span className="text-sm text-muted-foreground">Commit</span>
             </div>
-            <code className="rounded bg-muted px-2 py-1 font-mono text-xs text-foreground">
-              {data.gitCommit}
+            <code
+              title={data.gitCommit}
+              className="rounded bg-muted px-2 py-1 font-mono text-xs text-foreground"
+            >
+              {data.gitCommit === "unknown" ? data.gitCommit : data.gitCommit.slice(0, 7)}
             </code>
           </div>
 
