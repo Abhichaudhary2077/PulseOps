@@ -1,23 +1,21 @@
-import { Sparkles, RefreshCw } from "lucide-react";
+import { Activity, RefreshCw } from "lucide-react";
 import { MetricCard } from "./MetricCard";
 import { useAISummary } from "@/hooks/usePulseOps";
 import { format } from "date-fns";
 
+function formatTimestamp(timestamp: string): string {
+  const date = new Date(timestamp);
+  if (!Number.isFinite(date.getTime())) return "unknown";
+  return format(date, "HH:mm:ss");
+}
+
 export function AISummaryCard() {
   const { data, isLoading, error, refetch, isFetching } = useAISummary();
 
-  const formatTimestamp = (timestamp: string) => {
-    try {
-      return format(new Date(timestamp), "HH:mm:ss");
-    } catch {
-      return timestamp;
-    }
-  };
-
   return (
     <MetricCard
-      title="AI System Summary"
-      icon={Sparkles}
+      title="Operational Summary"
+      icon={Activity}
       isLoading={isLoading}
       error={error?.message}
       className="md:col-span-2 lg:col-span-1"
@@ -29,16 +27,14 @@ export function AISummaryCard() {
               {data.summary}
             </p>
           </div>
-          
+
           <div className="flex items-center justify-between text-xs text-muted-foreground">
             <div className="flex items-center gap-2">
-              {data.fallback && (
-                <span className="rounded bg-status-warning/20 px-2 py-0.5 text-status-warning">
-                  fallback
-                </span>
-              )}
+              <span className="rounded bg-status-warning/20 px-2 py-0.5 text-status-warning">
+                rule-based
+              </span>
               <span className="font-mono">
-                Generated at {formatTimestamp(data.generatedAt)}
+                Updated at {formatTimestamp(data.generatedAt)}
               </span>
             </div>
             <button
