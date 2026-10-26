@@ -40,8 +40,8 @@ jobs:
           (
             cd frontend
             rm -f package-lock.json
-            npm install --package-lock-only --ignore-scripts
-            npm audit fix --package-lock-only || true
+            npx --yes npm@11.19.1 install --package-lock-only --ignore-scripts
+            npx --yes npm@11.19.1 audit fix --package-lock-only || true
           )
 
       - name: Install backend dependencies
@@ -98,7 +98,11 @@ jobs:
           set +e
           for package_dir in backend frontend; do
             echo "=== Applying compatible dependency fixes in $package_dir ==="
-            (cd "$package_dir" && npm audit fix --package-lock-only)
+            if [ "$package_dir" = "frontend" ]; then
+              (cd "$package_dir" && npx --yes npm@11.19.1 audit fix --package-lock-only)
+            else
+              (cd "$package_dir" && npm audit fix --package-lock-only)
+            fi
             FIX_STATUS=$?
             echo "npm audit fix exit code for $package_dir: $FIX_STATUS"
           done
