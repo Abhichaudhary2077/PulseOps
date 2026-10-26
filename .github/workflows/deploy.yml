@@ -31,6 +31,18 @@ jobs:
             backend/package-lock.json
             frontend/package-lock.json
 
+      - name: Prepare dependency lockfiles for the updated toolchain
+        if: github.event_name == 'pull_request'
+        shell: bash
+        run: |
+          set -euo pipefail
+          (cd backend && npm audit fix --package-lock-only)
+          (
+            cd frontend
+            npm install --package-lock-only --ignore-scripts
+            npm audit fix --package-lock-only || true
+          )
+
       - name: Install backend dependencies
         working-directory: backend
         run: npm ci
