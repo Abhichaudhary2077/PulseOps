@@ -10,7 +10,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   validate:
@@ -102,6 +102,36 @@ jobs:
           if-no-files-found: error
           retention-days: 1
 
+      - name: Revalidate updated dependency trees
+        if: github.event_name == 'pull_request'
+        shell: bash
+        run: |
+          set -euo pipefail
+          (
+            cd backend
+            npm ci
+            npm test
+            npm audit --json > "$RUNNER_TEMP/backend-audit-after-fix.json" || true
+          )
+          (
+            cd frontend
+            npm ci
+            npm run lint
+            npm run typecheck
+            npm run build
+            npm audit --json > "$RUNNER_TEMP/frontend-audit-after-fix.json" || true
+          )
+          node - "$RUNNER_TEMP/backend-audit-after-fix.json" "$RUNNER_TEMP/frontend-audit-after-fix.json" <<'NODE'
+          const fs = require("node:fs");
+          for (const path of process.argv.slice(2)) {
+            const report = JSON.parse(fs.readFileSync(path, "utf8"));
+            console.log(`${path}: ${JSON.stringify(report.metadata?.vulnerabilities ?? {})}`);
+            for (const [name, item] of Object.entries(report.vulnerabilities ?? {})) {
+              console.log(`- ${name}: ${item.severity}; direct=${item.isDirect}; fix=${JSON.stringify(item.fixAvailable)}`);
+            }
+          }
+          NODE
+
       - name: Set up Buildx for container validation
         if: github.event_name == 'pull_request'
         uses: docker/setup-buildx-action@v4
@@ -129,6 +159,23 @@ jobs:
           tags: pulseops-frontend:ci
           cache-from: type=gha,scope=pulseops-frontend
           cache-to: type=gha,scope=pulseops-frontend,mode=max
+
+      - name: Commit compatible lockfile fixes
+        if: github.event_name == 'pull_request'
+        env:
+          PR_BRANCH: ${{ github.head_ref }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add backend/package-lock.json frontend/package-lock.json
+          if git diff --cached --quiet; then
+            echo "No compatible lockfile updates to commit."
+          else
+            git commit -m "chore: apply compatible npm security updates"
+            git push origin "HEAD:${PR_BRANCH}"
+          fi
 
   build-and-deploy:
     name: Build images and deploy to OCI
