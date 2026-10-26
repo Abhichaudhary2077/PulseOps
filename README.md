@@ -1,218 +1,189 @@
 # PulseOps
 
-> Deployed with Docker, GitHub Actions, and OCI for automated image-based delivery.
+A lightweight system-health and deployment-visibility dashboard built to demonstrate containerization, CI/CD, and cloud deployment.
 
-PulseOps is a minimal, production-style system health and deployment visibility dashboard built to demonstrate real-world **DevOps workflows** using Docker, CI/CD, and AWS.
+**Live demo:** http://129.225.116.192/  
+**Source code:** https://github.com/Abhichaudhary2077/PulseOps
 
-The project intentionally prioritizes **operational correctness, automation, and stateless deployment** over feature-heavy application logic.
+> The demo currently runs over HTTP on a single OCI Compute VM. It is a learning/portfolio environment, not a hardened production service. Do not submit sensitive data.
 
----
+## Overview
 
-## What This Project Demonstrates
+PulseOps is a two-service web application:
 
-- Containerized frontend and backend services
-- Stateless deployment on AWS EC2
-- Automated CI/CD using GitHub Actions
-- Image-based deployments via Docker Hub
-- Zero manual server changes during deployments
-- Real-world debugging of production failures (auth, networking, CI issues)
+- **Frontend:** React, TypeScript, and Vite; served as static assets by NGINX.
+- **Backend:** Node.js and Express REST API.
+- **Containerization:** Separate Docker images orchestrated with Docker Compose.
+- **Delivery:** GitHub Actions builds and publishes the images to Docker Hub, then connects to the OCI VM over SSH to pull and run the published images.
+- **System metrics:** The backend exposes Linux/Node system metrics for CPU, memory, load average, and uptime through a `/system` endpoint.
 
-This project is designed as a **DevOps-focused portfolio artifact**.
+The deployment is image-based: compilation and image builds run on the GitHub-hosted runner. The OCI VM pulls the built images and runs the containers; it does not build the application from source during deployment.
 
----
+## Live architecture
 
-## Architecture Overview
-
+```text
 Browser
-|
-| HTTP
-v
-Application Load Balancer (ALB)
-|
-v
-AWS EC2 (Docker Host)
-|
-|-- Nginx Container (Frontend - React)
-|
-|-- Node.js Container (Backend API)
+  |
+  | HTTP :80
+  v
+OCI Compute VM
+  |
+  +-- NGINX frontend container
+  |     +-- serves the built React application
+  |     +-- proxies /api/* to the backend service
+  |
+  +-- Express backend container
+        +-- /health
+        +-- /version
+        +-- /ai-summary
+        +-- /system
+```
 
-pgsql
-Copy code
+Both containers run on the Docker Compose network. The Compose configuration publishes **port 80** for the frontend; the backend's port **3000 is not published on the VM host**. NGINX forwards requests under `/api/` to `backend:3000` and removes the `/api/` prefix when proxying.
 
-- Both services are **stateless**
-- EC2 stores **only docker-compose.yml**
-- No source code exists on the server
-- Deployments are fully image-driven
+## Features
 
----
+- Separate frontend and backend Docker images.
+- Multi-stage frontend image: Vite builds the static assets, then NGINX serves them.
+- Docker Compose service orchestration with restart policies.
+- GitHub Actions CI/CD triggered by pushes to `main`.
+- Docker Hub publishing with `latest` and commit-SHA image tags.
+- SSH-based deployment to OCI using GitHub Actions secrets.
+- API rate limiting: 60 requests per minute per client key, returning HTTP `429` when the limit is exceeded.
+- React Query refreshes the health and VM-metrics data every 30 seconds.
+- VM metrics endpoint reads Linux `/proc` data and Node.js `os` information; it does not require OCI API credentials.
 
-## Backend API
+## API endpoints
 
-### `GET /health`
+The public browser-facing paths are proxied by NGINX to the corresponding Express routes.
 
-Returns current system health.
+| Endpoint | Purpose | Current behaviour |
+|---|---|---|
+| `GET /api/health` | Application health response | Returns API status, backend-process uptime, and a timestamp. The `database` and `memory` labels in `checks` are currently placeholders, not live dependency checks. |
+| `GET /api/version` | Version/environment metadata | Returns `version`, `environment`, and `deployedAt`. Defaults are defined in the backend when environment variables are not set. |
+| `GET /api/ai-summary` | Summary card content | Currently returns a fixed demonstration message and a generated timestamp; it does not call an AI service. |
+| `GET /api/system` | Runtime system metrics | Returns runtime hostname, platform, architecture, CPU information, memory totals/usage/availability, 1/5/15-minute load averages, and uptime read from Linux `/proc` and Node.js system APIs. |
 
-```json
-{
-  "status": "UP",
-  "uptime": 930,
-  "timestamp": "2026-01-09T10:49:52.681Z",
-  "checks": {
-    "database": "healthy",
-    "memory": "healthy"
-  }
-}
-GET /version
-Returns deployment metadata.
+### Rate limiting
 
-json
-Copy code
-{
-  "version": "1.0.0",
-  "environment": "production",
-  "deployedAt": "2026-01-09T10:45:00.000Z"
-}
-GET /ai-summary
-Simulated AI-generated system summary.
+The Express rate limiter is applied to backend API routes. NGINX sends the client's address in `X-Real-IP`; the backend uses that address when deriving the rate-limit key. Exceeding the configured limit returns a JSON response with status `RATE_LIMITED` and HTTP `429`.
 
-json
-Copy code
-{
-  "summary": "System healthy. All checks passing. No action required.",
-  "generatedAt": "2026-01-09T10:50:00.000Z"
-}
-Tech Stack
-Frontend
-React 18
+## Technology stack
 
-TypeScript
+**Frontend**
+- React 18, TypeScript, Vite
+- TanStack React Query
+- Tailwind CSS and shadcn/Radix UI components
+- Lucide icons
 
-Vite
+**Backend**
+- Node.js 20, Express
+- `cors`, `express-rate-limit`
+- Linux `/proc` and Node.js `os` APIs for system data
 
-Tailwind CSS
+**DevOps and infrastructure**
+- Docker and Docker Compose
+- NGINX reverse proxy/static server
+- GitHub Actions with Docker Buildx
+- Docker Hub image registry
+- OCI Compute running Oracle Linux
 
-TanStack React Query
+## Repository layout
 
-Nginx (containerized)
-
-Backend
-Node.js
-
-Express
-
-REST API
-
-Stateless service design
-
-DevOps & Infrastructure
-Docker
-
-Docker Compose
-
-AWS EC2
-
-AWS Application Load Balancer
-
-GitHub Actions (CI/CD)
-
-Docker Hub (image registry)
-
-Project Structure
-swift
-Copy code
+```text
 PulseOps/
+├── .github/workflows/deploy.yml  # build, publish, and deploy pipeline
 ├── backend/
 │   ├── Dockerfile
-│   ├── index.js
-│   └── package.json
-│
+│   ├── index.js                  # Express routes and rate limiter
+│   ├── package.json
+│   └── package-lock.json
 ├── frontend/
-│   ├── Dockerfile
+│   ├── Dockerfile                # Vite build stage + NGINX runtime
+│   ├── nginx/default.conf        # static hosting and /api proxy
+│   ├── package.json
 │   └── src/
-│
-├── .github/workflows/
-│   └── deploy.yml
-│
+│       ├── components/           # dashboard cards and UI components
+│       ├── hooks/                # React Query and UI hooks
+│       ├── lib/api.ts            # browser API calls
+│       └── pages/
 ├── docker-compose.yml
 └── README.md
-Docker Compose (Production)
-yaml
-Copy code
-services:
-  backend:
-    image: abhichoudhary2077/pulseops-backend:latest
-    container_name: pulseops-backend
-    restart: unless-stopped
-    ports:
-      - "3000:3000"
+```
 
-  frontend:
-    image: abhichoudhary2077/pulseops-frontend:latest
-    container_name: pulseops-frontend
-    restart: unless-stopped
-    ports:
-      - "80:80"
-    depends_on:
-      - backend
-CI/CD Pipeline
-On every push to the main branch:
+## Run the published images locally
 
-Backend Docker image is built
+Requirements: Docker Engine and Docker Compose v2. Port 80 must be available on your machine.
 
-Frontend Docker image is built
+```bash
+git clone https://github.com/Abhichaudhary2077/PulseOps.git
+cd PulseOps
+docker compose pull
+docker compose up -d
+docker compose ps
+```
 
-Images are pushed to Docker Hub
+Open [http://localhost/](http://localhost/). The Compose file uses the published `latest` images.
 
-GitHub Actions connects to EC2 via SSH
+To build the images from the checked-out source instead, build them using the same tags referenced by `docker-compose.yml`, then start Compose:
 
-EC2 pulls latest images
+```bash
+docker build -t abhichoudhary2077/pulseops-backend:latest ./backend
+docker build -t abhichoudhary2077/pulseops-frontend:latest ./frontend
+docker compose up -d
+```
 
-Containers are restarted using Docker Compose
+Useful checks:
 
-No manual SSH or server configuration is required after initial setup.
+```bash
+curl http://localhost/api/health
+curl http://localhost/api/version
+curl http://localhost/api/ai-summary
+curl http://localhost/api/system
+docker compose logs -f
+```
 
-Deployment Characteristics
-Stateless EC2 instance
+Stop the containers with `docker compose down`.
 
-Immutable Docker images
+## CI/CD workflow
 
-No source code stored on server
+The workflow in `.github/workflows/deploy.yml` runs on pushes to `main`:
 
-Fully automated deployments
+1. Checks out the repository and configures Docker Buildx.
+2. Authenticates to Docker Hub using GitHub Actions secrets.
+3. Builds and pushes backend and frontend images tagged `latest` and with the commit SHA.
+4. Connects to the OCI VM over SSH.
+5. Runs `docker compose pull`, `docker compose up -d --remove-orphans`, and `docker image prune -f`.
+6. Prints memory usage and service status before/after deployment.
 
-Manual rollback via image re-deploy
+The workflow requires these repository secrets: `DOCKERHUB_USERNAME`, `DOCKERHUB_TOKEN`, `OCI_HOST`, `OCI_USER`, and `OCI_SSH_KEY`.
 
-Designed to fail loudly and visibly
+**Deployment detail:** image tags include the commit SHA for traceability, but the current Compose file references the `latest` tags. Deployment therefore runs the images resolved from `latest`, rather than pinning Compose to a specific commit tag. The deployment recreates containers and may cause a brief interruption; it is not a zero-downtime or multi-instance rollout.
 
-DevOps Focus
-This project emphasizes:
+## Configuration
 
-CI/CD reliability
+The backend supports these environment variables:
 
-Container lifecycle management
+| Variable | Default | Purpose |
+|---|---|---|
+| `PORT` | `3000` | Express listening port |
+| `APP_VERSION` | `1.0.0` | Version value returned by `/version` |
+| `NODE_ENV` | `production` | Environment label returned by `/version` |
+| `DEPLOYED_AT` | Current timestamp when responding | Value returned as `deployedAt` |
 
-Infrastructure debugging
+The current Compose file does not set these variables explicitly.
 
-Deployment automation
+## Current scope and limitations
 
-Real-world failure handling
+- Single-VM deployment; no high availability, multi-node orchestration, or automatic failover.
+- The demo uses HTTP and does not currently configure TLS/HTTPS or application authentication.
+- No database is connected; the database status in `/health` is a placeholder.
+- The AI summary is static demonstration content, not a live model integration.
+- The health endpoint's memory/database labels are not threshold-based checks; the separate `/system` endpoint supplies the numeric VM metrics.
+- The UI has fields intended for commit/build metadata, but the current `/version` response does not yet return `gitCommit` or `buildTimestamp`.
+- The workflow builds and deploys images but does not currently run a dedicated automated test or post-deployment smoke-test stage.
+- The live demo is public. Keep secrets in GitHub Actions secrets and never commit credentials, private keys, or production data.
 
-Application logic is intentionally minimal to keep focus on operations.
+## Project goal
 
-Intended Use
-This project is built as a DevOps portfolio project to demonstrate practical understanding of:
-
-Dockerized deployments
-
-CI/CD pipelines
-
-Cloud infrastructure basics
-
-Production debugging and recovery
-
-Notes
-Monitoring and autoscaling are intentionally excluded to keep scope focused
-
-Architecture is single-EC2 by design for learning clarity
-
-Project favors simplicity and correctness over scaleOCI CI/CD deployment test
+PulseOps is a practical DevOps portfolio project focused on repeatable containerized deployment, CI/CD automation, reverse proxying, API reliability controls, and system visibility on a small cloud VM. It is intentionally compact so the deployment and operational behaviour can be inspected directly.
