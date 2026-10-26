@@ -78,6 +78,30 @@ jobs:
           NODE
           done
 
+      - name: Generate compatible dependency lockfile fixes
+        if: github.event_name == 'pull_request'
+        shell: bash
+        run: |
+          set +e
+          for package_dir in backend frontend; do
+            echo "=== Applying compatible dependency fixes in $package_dir ==="
+            (cd "$package_dir" && npm audit fix --package-lock-only)
+            FIX_STATUS=$?
+            echo "npm audit fix exit code for $package_dir: $FIX_STATUS"
+          done
+          mkdir -p "$RUNNER_TEMP/pulseops-lockfiles"
+          cp backend/package-lock.json "$RUNNER_TEMP/pulseops-lockfiles/backend-package-lock.json"
+          cp frontend/package-lock.json "$RUNNER_TEMP/pulseops-lockfiles/frontend-package-lock.json"
+
+      - name: Upload generated dependency lockfiles
+        if: github.event_name == 'pull_request'
+        uses: actions/upload-artifact@v4
+        with:
+          name: pulseops-audit-fixed-lockfiles
+          path: ${{ runner.temp }}/pulseops-lockfiles/
+          if-no-files-found: error
+          retention-days: 1
+
       - name: Set up Buildx for container validation
         if: github.event_name == 'pull_request'
         uses: docker/setup-buildx-action@v4
