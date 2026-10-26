@@ -1,7 +1,9 @@
 import { cn } from "@/lib/utils";
 
+type ServiceStatus = "UP" | "DEGRADED" | "DOWN" | "UNKNOWN";
+
 interface StatusBadgeProps {
-  status: "UP" | "DOWN" | "UNKNOWN";
+  status: ServiceStatus;
   size?: "sm" | "md" | "lg";
 }
 
@@ -12,14 +14,16 @@ export function StatusBadge({ status, size = "md" }: StatusBadgeProps) {
     lg: "h-4 w-4",
   };
 
-  const statusClasses = {
+  const statusClasses: Record<ServiceStatus, string> = {
     UP: "bg-status-healthy status-pulse",
+    DEGRADED: "bg-status-warning",
     DOWN: "bg-status-unhealthy status-pulse-unhealthy",
     UNKNOWN: "bg-status-unknown",
   };
 
-  const labelClasses = {
+  const labelClasses: Record<ServiceStatus, string> = {
     UP: "text-status-healthy",
+    DEGRADED: "text-status-warning",
     DOWN: "text-status-unhealthy",
     UNKNOWN: "text-status-unknown",
   };
@@ -30,7 +34,7 @@ export function StatusBadge({ status, size = "md" }: StatusBadgeProps) {
         className={cn(
           "rounded-full",
           sizeClasses[size],
-          statusClasses[status]
+          statusClasses[status],
         )}
       />
       <span className={cn("font-mono text-sm font-semibold", labelClasses[status])}>
