@@ -39,6 +39,7 @@ jobs:
           (cd backend && npm audit fix --package-lock-only)
           (
             cd frontend
+            rm -f package-lock.json
             npm install --package-lock-only --ignore-scripts
             npm audit fix --package-lock-only || true
           )
