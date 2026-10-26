@@ -13,11 +13,17 @@ function formatUptime(seconds: number): string {
   return `${minutes}m`;
 }
 
+function statusTextClass(status: string): string {
+  if (status === "healthy") return "text-status-healthy";
+  if (status === "warning") return "text-status-warning";
+  if (status === "unhealthy") return "text-status-unhealthy";
+  return "text-status-unknown";
+}
+
 export function HealthCard() {
   const { data, isLoading, error } = useHealth();
-
-  // ✅ Defensive defaults (THIS IS THE KEY FIX)
   const checks = data?.checks ?? {
+    api: "unknown",
     database: "unknown",
     memory: "unknown",
   };
@@ -37,7 +43,7 @@ export function HealthCard() {
           </div>
 
           <div className="flex items-center justify-between">
-            <span className="text-sm text-muted-foreground">Uptime</span>
+            <span className="text-sm text-muted-foreground">Process Uptime</span>
             <span className="font-mono text-sm font-medium text-foreground">
               {formatUptime(data.uptime)}
             </span>
@@ -49,36 +55,32 @@ export function HealthCard() {
             </p>
 
             <div className="space-y-2">
-              {/* Database */}
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Activity className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-sm">API</span>
+                </div>
+                <span className={`font-mono text-xs ${statusTextClass(checks.api)}`}>
+                  {checks.api}
+                </span>
+              </div>
+
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <Database className="h-4 w-4 text-muted-foreground" />
                   <span className="text-sm">Database</span>
                 </div>
-                <span
-                  className={`font-mono text-xs ${
-                    checks.database === "healthy"
-                      ? "text-status-healthy"
-                      : "text-status-unhealthy"
-                  }`}
-                >
+                <span className={`font-mono text-xs ${statusTextClass(checks.database)}`}>
                   {checks.database}
                 </span>
               </div>
 
-              {/* Memory */}
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <HardDrive className="h-4 w-4 text-muted-foreground" />
                   <span className="text-sm">Memory</span>
                 </div>
-                <span
-                  className={`font-mono text-xs ${
-                    checks.memory === "healthy"
-                      ? "text-status-healthy"
-                      : "text-status-unhealthy"
-                  }`}
-                >
+                <span className={`font-mono text-xs ${statusTextClass(checks.memory)}`}>
                   {checks.memory}
                 </span>
               </div>
